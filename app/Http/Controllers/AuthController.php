@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\User;
 use Illuminate\Http\Request;
+use App\Mail\VerificationEmail;
 use App\Mail\ResetPasswordEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -59,8 +60,30 @@ class AuthController extends Controller {
         $user->full_name = $request->full_name;
         $user->username = $request->username;
 
+        Mail::to($user->email)->send(new VerificationEmail($token = str_random(40)));
+        $user->email_token = $token;
+
         // Credentials accepted. Issue tokens
         return $this->authenticate($user);
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        $this->validate($request, [
+            'token' => 'required'
+        ]);
+
+        $token = $request->token;
+        $user = User::where('email_token', $token)->first();
+
+        if (!$user)
+            return response()->json('Invalid token', 422);
+
+        $user->is_email_verified = true;
+        $user->email_token = null;
+        $user->save();
+
+        return $this->jsonResponse('Email Verified');
     }
 
     /**
@@ -127,6 +150,5 @@ class AuthController extends Controller {
 
         return response()->json('Logged in', 200, ['token' => $token]);
     }
-
 
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\User;
+use App\Mail\VerificationEmail;
 use App\Mail\ResetPasswordEmail;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Lumen\Testing\DatabaseMigrations;
@@ -54,6 +55,37 @@ class AuthTest extends TestCase
         $this->seeInDatabase('users', ['full_name' => $user->full_name]);
     }
 
+     /** @test */
+    public function a_verification_email_is_sent_after_registration()
+    {
+        Mail::fake();
+        Mail::assertNothingSent();
+
+        $user = make('App\User');
+        $password = 'secret';
+
+        $this->json('POST', '/auth/register', array_merge($user->toArray(), compact('password')));
+
+        Mail::assertSent(VerificationEmail::class, function ($mail) use ($user) {
+            return $mail->hasTo($user->email);
+        });
+    }
+
+    /** @test */
+    public function a_user_can_verify_own_email_address()
+    {
+        $user = make('App\User');
+        $password = 'secret';
+        $this->json('POST', '/auth/register', array_merge($user->toArray(), compact('password')));
+
+        $emailToken = $this->getUser($user)->email_token;
+        $this->assertEquals($user->is_email_verified, false);
+
+        $this->json('GET', "/auth/verify-email?token=$emailToken", ['token' => $emailToken]);
+
+        $this->assertEquals($this->getUser($user)->is_email_verified, true);
+    }
+
     /** @test */
     public function user_emails_are_unique()
     {
@@ -96,7 +128,7 @@ class AuthTest extends TestCase
         $this->json('POST', '/auth/forgot-password', ['email' => $user->email])
             ->seeStatusCode(200);
 
-        $user = User::find($user->id);
+        $user = $this->getUser($user);
 
         $this->json('POST', '/auth/reset-password', ['token' => $user->api_token, 'new_password' => $newPassword, 'new_password_confirmation' => $newPassword])
             ->seeStatusCode(200);
@@ -147,4 +179,9 @@ class AuthTest extends TestCase
     //     // $this->json('GET', 'check-auth', [], ['Authorization' => "Bearer $token"])
     //     //     ->seeStatusCode(401);
     // }
+    //
+    public function getUser($user)
+    {
+        return User::find($user->id) ?: User::where('email', $user->email)->first();
+    }
 }
