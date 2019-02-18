@@ -30,7 +30,7 @@ $app->withEloquent();
 $app->configure('auth');
 
 $app->register(Appzcoder\LumenRoutesList\RoutesCommandServiceProvider::class);
-
+$app->register('Vluzrmos\Tinker\TinkerServiceProvider');
 
 /*
 |--------------------------------------------------------------------------
