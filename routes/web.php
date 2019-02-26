@@ -14,6 +14,7 @@ $router->group(['prefix' => 'auth'], function () use ($router) {
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
     $router->post('forgot-password', 'AuthController@forgotPassword');
+    $router->get('reset-password', 'AuthController@showResetPasswordForm');
     $router->post('reset-password', 'AuthController@resetPassword');
     $router->get('verify-email', 'AuthController@verifyEmail');
 });
@@ -24,7 +25,4 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
     $router->get('check-auth', function () {
         return 'check';
     });
-
-    $router->get('jobs', 'JobsController@index');
-    $router->post('jobs', 'JobsController@store');
 });

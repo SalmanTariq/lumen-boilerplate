@@ -29,7 +29,11 @@ class ResetPasswordEmail extends Mailable
      */
     public function build()
     {
+        $url = env('APP_URL') . "/auth/reset-password?token=$token";
         // Build Email
-        $this->view('mails.reset-password-email');
+        $this->markdown('mails.reset-password-email')
+            ->with([
+                'url' => $url
+            ]);
     }
 }

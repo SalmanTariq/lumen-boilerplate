@@ -109,6 +109,12 @@ class AuthController extends Controller {
         return response()->json('Email sent');
     }
 
+    public function showResetPasswordForm(Request $request)
+    {
+        $token = $request->token;
+        return view('reset-password');
+    }
+
     /**
      * Check credentials and log the user in
      * @param  Request $request The request parameters

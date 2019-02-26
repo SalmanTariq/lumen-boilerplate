@@ -29,7 +29,11 @@ class VerificationEmail extends Mailable
      */
     public function build()
     {
+        $url = env('APP_URL') . "/auth/verify-email?token=".$this->token;
         // Build Email
-        $this->view('mails.verification-email');
+        $this->markdown('mails.verification-email')
+            ->with([
+                'url' => $url
+            ]);
     }
 }
